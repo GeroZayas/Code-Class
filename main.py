@@ -4,6 +4,26 @@ import tempfile
 import fnmatch
 import mimetypes
 
+# Set page config and custom CSS
+st.set_page_config(page_title="File Content Extractor", page_icon="📁")
+
+# Custom CSS for some color enhancements
+st.markdown("""
+    <style>
+    .main {
+        background-color: #f0f2f6;
+    }
+    .stButton>button {
+        background-color: #4CAF50;
+        color: white;
+    }
+    .stDownloadButton>button {
+        background-color: #008CBA;
+        color: white;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
 def is_binary_file(file_path):
     """Check if file is binary using both mimetype and content analysis"""
     # Check by mime type first
@@ -78,12 +98,13 @@ def get_files_from_directory(directory_path, ignore_list=None):
                 files_dict[rel_path] = full_path
     return files_dict
 
-st.title("File Content Extractor")
+st.title("📁 File Content Extractor")
 
 # File/Directory uploader section
-st.header("Upload Files or Directories")
+st.header("📤 Upload Files or Directories")
+st.markdown("_Choose your files or specify a directory path below:_")
 uploaded_files = st.file_uploader("Drag and drop files here", accept_multiple_files=True)
-uploaded_dir = st.text_input("Or paste a directory path from your computer")
+uploaded_dir = st.text_input("💻 Or paste a directory path from your computer")
 
 # Process uploads and create file tree
 files_to_process = {}
@@ -98,32 +119,34 @@ if uploaded_dir and os.path.exists(uploaded_dir):
     files_to_process.update(dir_files)
 
 # Create checkboxes for file selection
-st.header("Select files to include")
+st.header("✅ Select files to include")
 ignore_list = set()
 if files_to_process:
-    st.write("Uncheck files to exclude them from the final output:")
+    st.markdown("🔽 _Uncheck files to exclude them from the final output:_")
     for file_name in sorted(files_to_process.keys()):
-        if not st.checkbox(file_name, value=True, key=file_name):
+        if not st.checkbox(f"📄 {file_name}", value=True, key=file_name):
             ignore_list.add(file_name)
 
 # Generate and download button
-if files_to_process and st.button("Generate Combined Text File"):
-    combined_content = []
-    
-    for file_name, file_path in sorted(files_to_process.items()):
-        if file_name not in ignore_list:
-            combined_content.append(f"==================== {file_name} ====================\n")
-            content = extract_file_content(file_path)
-            combined_content.append(content + "\n\n")
-    
-    final_content = "\n".join(combined_content)
-    
-    st.download_button(
-        label="Download Combined Text File",
-        data=final_content,
-        file_name="combined_content.txt",
-        mime="text/plain"
-    )
+if files_to_process and st.button("🔄 Generate Combined Text File"):
+    with st.spinner("📝 Processing files..."):
+        combined_content = []
+        
+        for file_name, file_path in sorted(files_to_process.items()):
+            if file_name not in ignore_list:
+                combined_content.append(f"==================== 📄 {file_name} ====================\n")
+                content = extract_file_content(file_path)
+                combined_content.append(content + "\n\n")
+        
+        final_content = "\n".join(combined_content)
+        
+        st.success("✨ File generation complete!")
+        st.download_button(
+            label="⬇️ Download Combined Text File",
+            data=final_content,
+            file_name="combined_content.txt",
+            mime="text/plain"
+        )
 
 # Cleanup temporary files
 for path in files_to_process.values():
